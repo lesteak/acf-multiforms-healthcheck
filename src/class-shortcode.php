@@ -162,12 +162,16 @@ class Shortcode {
 		// 			break;
 		// 	}
 		// }
+		// if ( $message ) {
+		// 	printf( '<p class="steps">%1$s</p>', $message );
+		// }
 
-		$message = 'Step&nbsp;' . $args['step'] . '&nbsp;of&nbsp;' . $args['total_steps'];
+		$message = 'Step&nbsp;<span>' . $args['step'] . '</span>&nbsp;of&nbsp;<span>' . $args['total_steps'] . '</span>';
+		$step_percentage = $args['step'] / $args['total_steps'] * 100;
+		
 
-		if ( $message ) {
-			printf( '<p>%1$s</p>', $message );
-		}
+		echo '<div class="steps">' . $message . '</div>';
+		echo '<div class="step-bar-container"><div class="step-bar" style="max-width: ' . $step_percentage . '%; flex: 0 0 ' . $step_percentage . '%; -ms-flex: 0 0 ' . $step_percentage . '%"></div></div>';
 	}
 
 	/**
