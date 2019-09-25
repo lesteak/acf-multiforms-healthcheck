@@ -27,20 +27,20 @@ class Shortcode {
 	private $post_type;
 
 	/**
-	 * List of ACF fields groups we want to display as steps.
-	 * Each array item is an array of metaboxes IDs to display in a separate step.
+	 * Group field keys to be used
 	 *
 	 * @var array
 	 */
-	private $metabox_ids;
+	private $group_keys;
 
 	/**
 	 * The constructor saves the necessary properties that we just described above.
 	 */
 	public function __construct() {
+		//field mapping for languages
 		$this->id          = 'acf-multiforms-healthcheck';
 		$this->post_type   = 'healthchecks';
-		$this->metabox_ids = [ [ 'group_1' ], [ 'group_2' ], [ 'group_3' ], [ 'group_4' ], [ 'group_5' ], [ 'group_6' ], [ 'group_7' ], [ 'group_8' ], [ 'group_9' ] ];
+		$this->group_keys 	= '';
 		$this->hooks();
 	}
 
@@ -74,6 +74,8 @@ class Shortcode {
 			return;
 		}
 
+		$this->group_keys = $this->get_group_keys();
+
 		// User is currently filling the form, we display it.
 		if ( ! $this->current_multiform_is_finished() ) {
 			$this->output_acf_form( [
@@ -96,25 +98,63 @@ class Shortcode {
 	 * @param array $args
 	 * @return void
 	 */
+	private function get_group_keys() {
+		$field_group_ids = array(
+			'en' => 2068,
+			'es' => 3204,
+			'de' => 3596,
+			'fr' => 1833,
+			'da' => 2855,
+			'hr' => 5443,
+			'hu' => 3676,
+			'it' => 5520,
+			'ja' => 3771,
+			'nl' => 3441,
+			'pt-pt' => 3282,
+			'pt-br' => 4217,
+			'ro' => 3866,
+			'ru' => 3947,
+			'sl' => 4027,
+			'sv' => 4121,
+			'zh-hans' => 3362
+		);
+		$current_lang = (pll_current_language()) ? pll_current_language() : 'en';
+		
+		$fields = acf_get_fields($field_group_ids[$current_lang]);
+		foreach ($fields as $field) {
+			$group_keys[] = $field['key'];
+		}
+
+		return $group_keys;
+	}
+
+	/**
+	 * Output the ACF front end form.
+	 * Don't forget to add `acf_form_head()` in the header of your theme.
+	 * 
+	 * @link https://www.advancedcustomfields.com/resources/acf_form/
+	 * @param array $args
+	 * @return void
+	 */
 	private function output_acf_form( $args = [] ) {
 		// Get post_id from URL (if we are @ step 2 and above), or create a new_post (if we are @ step 1).
 		$requested_post_id = $this->get_request_post_id();
 		// Get the current step we are at in the form.
 		$requested_step    = $this->get_request_step();
-
+		
 		$args = wp_parse_args(
 			$args,
 			[
 				'post_id'     => $requested_post_id,
 				'step'        => 'new_post' === $requested_post_id ? 1 : $requested_step,
-				'total_steps' => 	count($this->metabox_ids),
+				'total_steps' => 	count($this->group_keys),
 				'post_type'   => 'post',
 				'post_status' => 'publish',
 			]
 		);
 
-		$submit_label           = $args['step'] < count( $this->metabox_ids ) ? __( 'Next step' ) : __( 'Finish' );
-		$current_step_metaboxes = ( $args['post_id'] !== 'new_post' && $args['step'] > 1 ) ? $this->metabox_ids[ (int) $args['step'] - 1 ] : $this->metabox_ids[0];
+		$submit_label           = $args['step'] < count( $this->group_keys ) ? __( 'Next step' ) : __( 'Finish' );
+		$current_step_group = ( $args['post_id'] !== 'new_post' && $args['step'] > 1 ) ? $this->group_keys[ (int) $args['step'] - 1 ] : $this->group_keys[0];
 
 		// Optional: display a custom message before the form.
 		$this->display_custom_message_before_form( $args );
@@ -124,7 +164,7 @@ class Shortcode {
 		 *
 		 * The key here is to tell ACF which fields groups (metaboxes) we want to display,
 		 * depending on the current form step we are at.
-		 * This is done via the "field_groups" parameter below.
+		 * This is done via the "fields" parameter below.
 		 */
 		acf_form(
 			[
@@ -134,7 +174,7 @@ class Shortcode {
 					'post_type'		=> $args['post_type'],
 					'post_status'	=> $args['post_status'],
 				],
-				'fields'      => $current_step_metaboxes,
+				'fields'      => array($current_step_group),
 				'submit_value'      => $submit_label,
 				'html_after_fields' => $this->output_hidden_fields( $args ),
 			]
@@ -243,11 +283,11 @@ class Shortcode {
 	 * @return int Current step, fallback to 1 (first set of metaboxes).
 	 */
 	private function get_request_step() {
-		if ( isset( $_POST['ame-current-step'] ) && absint( $_POST['ame-current-step'] ) <= count( $this->metabox_ids ) ) {
+		if ( isset( $_POST['ame-current-step'] ) && absint( $_POST['ame-current-step'] ) <= count( $this->group_keys ) ) {
 			return absint( $_POST['ame-current-step'] );
 		}
 
-		else if ( isset( $_GET['step'] ) && absint( $_GET['step'] ) <= count( $this->metabox_ids ) ) {
+		else if ( isset( $_GET['step'] ) && absint( $_GET['step'] ) <= count( $this->group_keys ) ) {
 			return absint( $_GET['step'] );
 		}
 
@@ -269,9 +309,9 @@ class Shortcode {
 			return;
 		}
 
-		$current_step = $this->get_request_step();
+		$this->group_keys = $this->get_group_keys();
 
-		var_dump($current_step);
+		$current_step = $this->get_request_step();
 
 		// First step: ACF just created the post, we might want to store some initial values.
 		if ( $current_step === 1 ) {
@@ -288,13 +328,10 @@ class Shortcode {
 			$token = wp_generate_password( rand( 10, 20 ), false, false );
 			update_post_meta( (int) $post_id, 'secret_token', $token );
 
-			//ensure that hc data is stored in initiative
-			update_post_meta( get_query_var('initiative_id'), 'recent_hc', $post_id);
-    	update_post_meta( get_query_var('initiative_id'), 'last_hc_date', get_the_date('Y-m-d H:i:s', $post_id) );
 		}
 
 		// First and middle steps: we are "editing" the post but user has not yet finished the entire flow.
-		if ( $current_step < count( $this->metabox_ids ) ) {
+		if ( $current_step < count( $this->group_keys ) ) {
 			// Add the post ID in URL and inform our front-end logic that we want to display the NEXT step.
 			$query_args = [
 				'step'    => ++$current_step,
@@ -310,6 +347,11 @@ class Shortcode {
 			// Pass a "finished" parameter to inform our front-end logic that we're done with the form.
 			$query_args = [ 'finished' => 1 ];
 			delete_post_meta( $post_id, 'incomplete');
+
+			//ensure that hc data is stored in initiative
+			update_post_meta( get_query_var('initiative_id'), 'recent_hc', $post_id);
+			update_post_meta( get_query_var('initiative_id'), 'last_hc_date', get_the_date('Y-m-d H:i:s', $post_id) );
+			
 			$redirect_url = add_query_arg('updated', 'healthcheck', get_permalink(get_query_var('initiative_id')));
 		}
 

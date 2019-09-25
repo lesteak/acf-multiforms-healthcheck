@@ -44,7 +44,15 @@ if ( ! defined( 'AMF_URL' ) ) {
 require_once AMF_DIR . '/src/class-utils.php';
 require_once AMF_DIR . '/src/class-shortcode.php';
 
+
 /**
- * Fire the darn thing!
+ * Fire the darn thing once plugins are loaded!
  */
-new ACF_Multiforms_Healthcheck\Shortcode();
+function fire() {
+	if(function_exists('pll_current_language')) {
+		new ACF_Multiforms_Healthcheck\Shortcode();
+	}
+}
+
+add_action('plugins_loaded', 'fire');
+
