@@ -98,29 +98,8 @@ class Shortcode {
 	 * @param array $args
 	 * @return void
 	 */
-	private function get_group_keys() {
-		$field_group_ids = array(
-			'en' => 2068,
-			'es' => 3204,
-			'de' => 3596,
-			'fr' => 1833,
-			'da' => 2855,
-			'hr' => 5443,
-			'hu' => 3676,
-			'it' => 5520,
-			'ja' => 3771,
-			'nl' => 3441,
-			'pt-pt' => 3282,
-			'pt-br' => 4217,
-			'ro' => 3866,
-			'ru' => 3947,
-			'sl' => 4027,
-			'sv' => 4121,
-			'zh-hans' => 3362
-		);
-		$current_lang = (pll_current_language()) ? pll_current_language() : 'en';
-		
-		$fields = acf_get_fields($field_group_ids[$current_lang]);
+	private function get_group_keys() {		
+		$fields = acf_get_fields(2068);
 		foreach ($fields as $field) {
 			$group_keys[] = $field['key'];
 		}

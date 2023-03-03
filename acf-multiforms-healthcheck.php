@@ -49,9 +49,7 @@ require_once AMF_DIR . '/src/class-shortcode.php';
  * Fire the darn thing once plugins are loaded!
  */
 function fire() {
-	if(function_exists('pll_current_language')) {
-		new ACF_Multiforms_Healthcheck\Shortcode();
-	}
+	new ACF_Multiforms_Healthcheck\Shortcode();
 }
 
 add_action('plugins_loaded', 'fire');
